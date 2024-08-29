@@ -14,12 +14,14 @@
       ansible.builtin.meta: end_play
       when: is_managed != 'true'
 
+    # getting all the data from the aws instances
     - name: Gather EC2 facts
       amazon.aws.ec2_instance_info:
         instance_ids:
           - "{{ ansible_ec2_instance_id }}"
       register: ec2_facts
 
+    # this one makes the playbook crash
     - name: Update hostname
       ansible.builtin.hostname:
         name: "{{ ansible_ec2_tag_Name }}"
@@ -37,6 +39,7 @@
       when: ansible_ec2_tag_Service is defined and ansible_ec2_tag_Version is defined
       ignore_errors: yes
 
+    # if the version tag is empty installing the latest
     - name: Install specific version of service
       ansible.builtin.package:
         name: "{{ ansible_ec2_tag_Service }}{% if ansible_ec2_tag_Version != 'latest' %}={{ ansible_ec2_tag_Version }}{% endif %}"
@@ -47,7 +50,7 @@
         - ansible_ec2_tag_Version != 'latest'
         - (current_version.stdout | default('0.0.0')) is version(ansible_ec2_tag_Version, '>')
 
-    # restarting server based the on the restart tag
+    # restarting server based the on the restart tag - look at the correct format from ansible for date
     - name: Create crontab for server restart
       ansible.builtin.cron:
         name: "Restart server"

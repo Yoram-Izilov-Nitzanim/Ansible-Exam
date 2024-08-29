@@ -1,0 +1,9 @@
+[defaults]
+inventory = ./aws_ec2.yml
+remote_user = ubuntu
+private_key_file = ./yoram-ssh.pem
+host_key_checking = False
+collections = amazon.aws
+
+[inventory]
+enable_plugins = aws_ec2

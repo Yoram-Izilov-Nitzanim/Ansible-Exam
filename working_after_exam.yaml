@@ -1,0 +1,35 @@
+---
+- name: Install Service on EC2 Instances
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # in case the service is empty
+    default_service_package: "default-service-package"
+
+  tasks:
+    - name: Get EC2 instances with specific tags
+      amazon.aws.ec2_instance_info:
+        filters:
+          "tag:Unique": "Yoram"
+      register: ec2_info
+
+    - name: Set up inventory for instances
+      set_fact:
+        ec2_hosts: "{{ ec2_info.instances | map(attribute='public_ip_address') | list }}"
+        service_packages: "{{ ec2_info.instances | map(attribute='tags.Service') | list }}"
+
+    - name: Install service on EC2 instances
+      block:
+        - name: Determine package to install
+          set_fact:
+            package_to_install: "{{ item | default(default_service_package) }}"
+          loop: "{{ service_packages }}"
+
+        - name: Install the service
+          ansible.builtin.shell: |
+            #!/bin/bash
+            sudo apt-get update
+            sudo apt-get install -y {{ package_to_install }}
+          delegate_to: "{{ item }}"
+          loop: "{{ ec2_hosts }}"
+          when: ec2_info.instances | length > 0

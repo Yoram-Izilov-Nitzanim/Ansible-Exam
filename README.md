@@ -19,3 +19,5 @@ unzip awscliv2.zip
 sudo ./aws/install
 aws configure # add keys and region
 ansible-galaxy collection install amazon.aws
+
+# dont forget to change pem key path in ansible cnf

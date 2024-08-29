@@ -1,0 +1,57 @@
+---
+- name: Yoram EC2 - managing
+  hosts: all
+  gather_facts: false
+  become: yes
+
+  tasks:
+    - name: Checks for Name Yoram and Manage True
+      ansible.builtin.set_fact:
+        is_managed: "{{ 'true' if (ansible_ec2_tag_Managed | default('false') | lower)  == 'true' and (ansible_ec2_tag_Name | default('')) == 'Yoram' else 'false' }}"    
+    
+    #skips when the instance is not mine
+    - name: Skip if not managed or name is not Yoram
+      ansible.builtin.meta: end_play
+      when: is_managed != 'true'
+
+    - name: Gather EC2 facts
+      amazon.aws.ec2_instance_info:
+        instance_ids:
+          - "{{ ansible_ec2_instance_id }}"
+      register: ec2_facts
+
+    - name: Update hostname
+      ansible.builtin.hostname:
+        name: "{{ ansible_ec2_tag_Name }}"
+
+    # installing the needed service
+    - name: Install service
+      ansible.builtin.package:
+        name: "{{ ansible_ec2_tag_Service }}"
+        state: present
+      when: ansible_ec2_tag_Service is defined
+
+    - name: Get current version of installed service
+      ansible.builtin.shell: "{{ ansible_ec2_tag_Service }} --version | grep -oP '\\d+\\.\\d+\\.\\d+'"
+      register: current_version
+      when: ansible_ec2_tag_Service is defined and ansible_ec2_tag_Version is defined
+      ignore_errors: yes
+
+    - name: Install specific version of service
+      ansible.builtin.package:
+        name: "{{ ansible_ec2_tag_Service }}{% if ansible_ec2_tag_Version != 'latest' %}={{ ansible_ec2_tag_Version }}{% endif %}"
+        state: present
+      when:
+        - ansible_ec2_tag_Service is defined
+        - ansible_ec2_tag_Version is defined
+        - ansible_ec2_tag_Version != 'latest'
+        - (current_version.stdout | default('0.0.0')) is version(ansible_ec2_tag_Version, '>')
+
+    # restarting server based the on the restart tag
+    - name: Create crontab for server restart
+      ansible.builtin.cron:
+        name: "Restart server"
+        weekday: "{{ ansible_ec2_tag_Restart.split()[0] }}"
+        hour: "{{ ansible_ec2_tag_Restart.split()[1] }}"
+        job: "/sbin/shutdown -r now"
+      when: ansible_ec2_tag_Restart is defined

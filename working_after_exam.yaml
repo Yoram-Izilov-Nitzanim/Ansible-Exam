@@ -1,36 +1,58 @@
-##### This one for now need Unique tag with the name Yoram and have a correct Service tag #### 
 ---
-- name: Install Service on EC2 Instances
+- name: Install Service & assign Cronjob on EC2 Instances
   hosts: localhost
   gather_facts: false
-  vars:
-    # in case the service is empty
-    default_service_package: "default-service-package"
 
   tasks:
-    - name: Get EC2 instances with specific tags
+    # Filters instances by Managed tag
+    - name: Get My Instances
       amazon.aws.ec2_instance_info:
         filters:
-          "tag:Unique": "Yoram"
+          "tag:Managed": "True:Yoram"
       register: ec2_info
 
+    # Sets the needed tags and gets all the values inside them - fileters the empty one 
+    # Skips ips that does not have public ip
     - name: Set up inventory for instances
       set_fact:
-        ec2_hosts: "{{ ec2_info.instances | map(attribute='public_ip_address') | list }}"
-        service_packages: "{{ ec2_info.instances | map(attribute='tags.Service') | list }}"
+        ec2_hosts: "{{ ec2_info.instances | selectattr('public_ip_address', 'defined') | selectattr('public_ip_address', '!=', '') | map(attribute='public_ip_address') | list }}"
+        service_packages: "{{ ec2_info.instances | selectattr('public_ip_address', 'defined') | selectattr('public_ip_address', '!=', '') | map(attribute='tags.Service') | list }}"
+        versions: "{{ ec2_info.instances | selectattr('public_ip_address', 'defined') | selectattr('public_ip_address', '!=', '') | map(attribute='tags.Version') | list }}"
+        restart_schedules: "{{ ec2_info.instances | selectattr('public_ip_address', 'defined') | selectattr('public_ip_address', '!=', '') | map(attribute='tags.Restart') | list }}"
 
     - name: Install service on EC2 instances
       block:
-        - name: Determine package to install
+        # if the service has a version - saves the format: service=version else service
+        - name: Choosing what package to install
           set_fact:
-            package_to_install: "{{ item | default(default_service_package) }}"
-          loop: "{{ service_packages }}"
+            package_to_install: >-
+              {% if item.1 %}
+                {{ item.0 }}={{ item.1 }}
+              {% else %}
+                {{ item.0 }}
+              {% endif %}
+          loop: "{{ service_packages | zip(versions) | list }}"
 
         - name: Install the service
-          ansible.builtin.shell: |
-            #!/bin/bash
-            sudo apt-get update
-            sudo apt-get install -y {{ package_to_install }}
+          ansible.builtin.apt:
+            name: "{{ package_to_install }}"
+            state: present
+            update_cache: yes
           delegate_to: "{{ item }}"
           loop: "{{ ec2_hosts }}"
+          become: yes
+          when: ec2_info.instances | length > 0
+
+        # making a cronjob reboot based on the  
+        - name: Setup cron job to restart the server
+          ansible.builtin.cron:
+            name: "Restart server based on tag"
+            minute: "{{ item.1.split(' ')[0] | default('*') }}"
+            hour: "{{ item.1.split(' ')[1] | default('*') }}"
+            day: "{{ item.1.split(' ')[2] | default('*') }}"
+            month: "{{ item.1.split(' ')[3] | default('*') }}"
+            weekday: "{{ item.1.split(' ')[4] | default('*') }}"
+            job: "sudo reboot >> /var/log/restart.log 2>&1"
+          delegate_to: "{{ item.0 }}"
+          loop: "{{ ec2_hosts | zip(restart_schedules) | list }}"
           when: ec2_info.instances | length > 0

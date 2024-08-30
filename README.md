@@ -1,7 +1,7 @@
 ![ANSIBLE_-_AWS_EC2_tags](https://github.com/user-attachments/assets/15fd26de-184b-4423-87f9-daf7444799b5)
 
 # Usage
-This project connects your aws with you ansible through tags,<br>
+This project connects your aws with your ansible through tags,<br>
 you can install services and sceduale reboots of your instances!
 
 # Pre-installation

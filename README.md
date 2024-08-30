@@ -7,7 +7,7 @@ you can install services and sceduale reboots of your instances!
 # Pre-installation
 ![image](https://github.com/user-attachments/assets/a69e4ada-2189-479d-80bb-4316d158f3a4)
 
-# notes
+# Notes
 - you will need your pem key, ansible.cfg, working_after_exam.yaml
 - dont forget to update your path to private key in ansible.cnf
 - change the managed tag to your liking in both aws instance tags and inside of the working_after_exam.yaml file line 11

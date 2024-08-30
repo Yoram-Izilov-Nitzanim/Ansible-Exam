@@ -25,7 +25,7 @@ Restart */30 * * * *<br>
 ```bash
 ansible-playbook working_after_exam.yaml
 ```
-'ק'~~
+
 # Credits
 ### Yoram Izilov
 

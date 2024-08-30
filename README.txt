@@ -4,7 +4,7 @@
 installation without python env:
 # note1: you will need your pem key, ansible.cfg, working_after_exam.yaml
 # note2: dont forget to update your path to private key in ansible.cnf
-# note3: change the managed tag yo your liking in both aws instance tags and inside of the working_after_exam.yaml file line 11
+# note3: change the managed tag to your liking in both aws instance tags and inside of the working_after_exam.yaml file line 11
 sudo apt update
 sudo apt install -y software-properties-common
 sudo apt install -y ansible

@@ -14,6 +14,7 @@ you can install services and sceduale reboots of your instances!
 - configure your aws cli with keys and region (us-east-1)
 
 Example of tags:<br>
+
 Name yoram-ansible-2<br>
 Managed True:Yoram<br>
 Service mysql-server<br>

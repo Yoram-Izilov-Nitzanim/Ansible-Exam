@@ -21,6 +21,11 @@ Service mysql-server<br>
 Version 8.0.39-0ubuntu0.24.04.2<br>
 Restart */30 * * * *<br>
 
+# Run
+```bash
+ansible-playbook working_after_exam.yaml
+```
+'ק'~~
 # Credits
 ### Yoram Izilov
 

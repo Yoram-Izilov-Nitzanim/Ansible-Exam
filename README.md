@@ -9,7 +9,7 @@ you can install services and sceduale reboots of your instances!
 
 # Notes
 - You will need your pem key, ansible.cfg, working_after_exam.yaml
-- Don't forget to update your path to private key in ansible.cnf
+- Don't forget to update your path to the private key in ansible.cfg
 - Change the managed tag in both aws instance tags and inside of the working_after_exam.yaml file - line 11
 - Configure your aws cli with keys and region (us-east-1)
 
